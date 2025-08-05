@@ -1,0 +1,75 @@
+// NewsAnalyzer.jsx
+import React, { useState } from "react";
+import axios from "axios";
+
+const API_KEY = "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";
+
+async function analyzeNewsWithAI(newsContent) {
+  try {
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "gryphe/mythomax-l2-13b",
+        messages: [
+          {
+            role: "system",
+            content: "你是一个聪明的新闻分析助手，请阅读以下内容并做出清晰准确的分析。",
+          },
+          {
+            role: "user",
+            content: newsContent,
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error("AI分析出错：", error);
+    return "分析失败，请稍后再试。";
+  }
+}
+
+export default function NewsAnalyzer() {
+  const [newsText, setNewsText] = useState("这是新闻内容……");
+  const [aiResult, setAiResult] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleAnalyze = async () => {
+    setLoading(true);
+    const result = await analyzeNewsWithAI(newsText);
+    setAiResult(result);
+    setLoading(false);
+  };
+
+  return (
+    <div className="p-4 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">📰 新闻 AI 分析助手</h1>
+      <textarea
+        className="w-full h-32 p-2 border rounded"
+        placeholder="粘贴新闻内容"
+        value={newsText}
+        onChange={(e) => setNewsText(e.target.value)}
+      ></textarea>
+      <button
+        onClick={handleAnalyze}
+        disabled={loading}
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        {loading ? "分析中..." : "让 AI 分析"}
+      </button>
+      {aiResult && (
+        <div className="bg-gray-100 p-4 mt-4 rounded">
+          <h2 className="font-semibold mb-2">🔍 AI 分析结果：</h2>
+          <p>{aiResult}</p>
+        </div>
+      )}
+    </div>
+  );
+}
